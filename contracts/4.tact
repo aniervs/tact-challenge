@@ -62,8 +62,9 @@ contract Task4 with Deployable {
             self.lockTime = now() + msg.forwardPayload.loadUint(32);
             self.nftAdd = sender();
             self.nftOwn = msg.prevOwner;
-            return;
       }
+      else
+      {
       send(SendParameters{
           to: sender(),
           value: 0,
@@ -77,6 +78,8 @@ contract Task4 with Deployable {
             forwardPayload: beginCell().asSlice()
           }.toCell()
       });
+
+      }
   }
 
   receive(msg: NftWithdrawal) {
@@ -90,9 +93,8 @@ contract Task4 with Deployable {
             mode: SendRemainingValue + SendIgnoreErrors,
             body: "NFT is still locked".asComment()
         });
-        return;
     }
-   
+    else {
     send(SendParameters{
           to: self.nftAdd!!,
           value: 0,
@@ -109,6 +111,9 @@ contract Task4 with Deployable {
     self.lockTime = 0;
     self.nftOwn = null;
     self.nftAdd = null;
+
+    }
+   
   }
 
   get fun time(): Int {

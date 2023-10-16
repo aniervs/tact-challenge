@@ -74,10 +74,10 @@ contract Task3 with Deployable {
           queryId: 0,
           amount: amount,
           destination: from,
-          responseDestination: from,
+          responseDestination: myAddress(),
           customPayload: null,
-          forwardTonAmount: 0,
-          forwardPayload: beginCell().asSlice()
+          forwardTonAmount: ton("0.01"),
+          forwardPayload: emptySlice()
         }.toCell()
       });
   }

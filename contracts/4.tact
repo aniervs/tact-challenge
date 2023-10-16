@@ -81,7 +81,7 @@ contract Task4 with Deployable {
 
   receive(msg: NftWithdrawal) {
 
-    if(0 <= self.lockTime - now()) {
+    if(0 < self.lockTime - now()) {
         send(SendParameters{
             to: sender(),
             value: 0,
@@ -103,6 +103,10 @@ contract Task4 with Deployable {
             forwardAmount: 0,
             forwardPayload: beginCell().asSlice()
           }.toCell()});
+
+    self.lockTime = 0;
+    self.nftOwn = null;
+    self.nftAdd = null;
   }
 
   get fun time(): Int {

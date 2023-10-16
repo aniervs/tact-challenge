@@ -55,7 +55,6 @@ contract Task3 with Deployable {
   bAmount: Int;
   jettonAddressA: Address;
   jettonAddressB: Address;
-  decimal: Int;
 
   init(admin: Address, newJettonAddressA: Address, newJettonAddressB: Address) {
     self.owner = admin;
@@ -63,15 +62,99 @@ contract Task3 with Deployable {
     self.jettonAddressB = newJettonAddressB;
     self.aAmount = 0;
     self.bAmount = 0;
-    self.decimal = 1000000000;
+  }
+
+  fun send(address: Address, from: Address, amount: Int) {
+    send(SendParameters{
+        to: address,
+        bounce: true,
+        value: 0,
+        mode: SendRemainingValue + SendIgnoreErrors,
+        body: TokenTransfer{
+          queryId: 0,
+          amount: amount,
+          destination: from,
+          responseDestination: from,
+          customPayload: null,
+          forwardTonAmount: 0,
+          forwardPayload: beginCell().asSlice()
+        }.toCell()
+      });
   }
 
   receive(msg: TokenNotification) {
+
+    require(sender()==self.jettonAddressA || sender()==self.jettonAddressB, "error");
+
+    if(msg.from == self.owner)
+    {
+      if(sender() == self.jettonAddressA)
+      {
+        self.aAmount = msg.amount+self.aAmount;
+      } 
+      else
+      {
+        self.bAmount = msg.amount+self.bAmount;
+      }
+    }
+    else
+    {
+
+      if(sender() == self.jettonAddressA) {
+        let amountSwap: Int = (self.bAmount*1000000000/self.aAmount)*msg.amount/1000000000;
+
+        if(self.bAmount < amountSwap)
+        {
+          self.send(sender(), msg.from, msg.amount);
+        }
+        else
+        {
+          self.bAmount = self.bAmount-amountSwap;
+          self.aAmount = self.aAmount+msg.amount;
+          self.send(self.jettonAddressB, msg.from, amountSwap);
+        }
+        }
+      else
+      {
+        let amountSwap: Int = (self.aAmount*1000000000/self.bAmount)*msg.amount/1000000000;
+
+        if(self.aAmount < amountSwap)
+        {
+          self.send(sender(), msg.from, msg.amount);
+        }
+        else
+        {
+          self.aAmount = self.aAmount-amountSwap;
+          self.bAmount = self.bAmount+msg.amount;
+          self.send(self.jettonAddressA, msg.from, amountSwap);
+        }
+      }
+    }
   } 
   
   get fun price(jetton: Address): Int { 
+
+    if(jetton == self.jettonAddressB)
+    {
+      return self.aAmount*1000000000/self.bAmount;
+    }
+    else
+    {
+      return self.bAmount*1000000000/self.aAmount;
+    }
+
+
   }
   
   get fun balance(jetton: Address): Int { 
+    if(jetton == self.jettonAddressA)
+    {
+      return self.aAmount;
+    }
+    else 
+    {
+      return self.bAmount;
+    } 
   }
+
 }

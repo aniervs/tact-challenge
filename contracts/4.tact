@@ -59,26 +59,26 @@ contract Task4 with Deployable {
   receive(msg: OwnershipAssigned) {
       if(self.nftAdd == null)
       {
-            self.lockTime = now() + msg.forwardPayload.loadUint(32);
-            self.nftAdd = sender();
-            self.nftOwn = msg.prevOwner;
+          self.lockTime = now() + msg.forwardPayload.loadUint(32);
+          self.nftAdd = sender();
+          self.nftOwn = msg.prevOwner;
       }
       else
       {
-      send(SendParameters{
-          to: sender(),
-          value: 0,
-          mode: SendRemainingValue + SendIgnoreErrors,
-          body: Transfer{
-            queryId: msg.queryId,
-            newOwner: msg.prevOwner,
-            responseDestination: msg.prevOwner,
-            customPayload: null,
-            forwardAmount: 0,
-            forwardPayload: beginCell().asSlice()
-          }.toCell()
-      });
-
+        send(SendParameters{
+          bounce: true,
+            to: sender(),
+            value: 0,
+            mode: SendRemainingValue + SendIgnoreErrors,
+            body: Transfer{
+              queryId: msg.queryId,
+              newOwner: msg.prevOwner,
+              responseDestination: msg.prevOwner,
+              customPayload: null,
+              forwardAmount: 0,
+              forwardPayload: beginCell().asSlice()
+            }.toCell()
+        });
       }
   }
 
@@ -88,14 +88,16 @@ contract Task4 with Deployable {
 
     if(0 < self.lockTime - now()) {
         send(SendParameters{
-            to: sender(),
-            value: 0,
-            mode: SendRemainingValue + SendIgnoreErrors,
-            body: "NFT is still locked".asComment()
+          bounce: true,
+          to: sender(),
+          value: 0,
+          mode: SendRemainingValue + SendIgnoreErrors,
+          body: "NFT is still locked".asComment()
         });
     }
     else {
-    send(SendParameters{
+      send(SendParameters{
+          bounce: true,
           to: self.nftAdd!!,
           value: 0,
           mode: SendRemainingValue + SendIgnoreErrors,
@@ -108,10 +110,10 @@ contract Task4 with Deployable {
             forwardPayload: beginCell().asSlice()
           }.toCell()});
 
-    self.lockTime = 0;
-    self.nftOwn = null;
-    self.nftAdd = null;
-
+        self.lockTime = 0;
+        self.nftOwn = null;
+        self.nftAdd = null;
+        
     }
    
   }
